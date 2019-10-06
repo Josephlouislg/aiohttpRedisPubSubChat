@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.mongo.name }}
+spec:
+  ports:
+    - port: {{ .Values.mongo.port }}
+      name: {{ .Values.mongo.name }}
+  clusterIP: None
+  selector:
+    app: {{ .Values.mongo.name }}
+---
+apiVersion: apps/v1beta2
+kind: StatefulSet
+metadata:
+  name: {{ .Values.mongo.name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.mongo.name }}
+  serviceName: {{ .Values.mongo.name }}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.mongo.name }}
+    spec:
+      containers:
+        - name: {{ .Values.mongo.name }}
+          image: mongo:3.4.2
+          imagePullPolicy: Always
+          ports:
+            - containerPort: {{ .Values.mongo.port }}
+              name: {{ .Values.mongo.name }}
+          resources:
+            {{ .Values.mongo.resources | toYaml | nindent 12 }}

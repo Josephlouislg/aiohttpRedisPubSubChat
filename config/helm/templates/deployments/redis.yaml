@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.redis.name }}
+spec:
+  ports:
+    - port: {{ .Values.redis.port }}
+      name: {{ .Values.redis.name }}
+  clusterIP: None
+  selector:
+    app: {{ .Values.redis.name }}
+---
+apiVersion: apps/v1beta2
+kind: StatefulSet
+metadata:
+  name: {{ .Values.redis.name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.redis.name }}
+  serviceName: {{ .Values.redis.name }}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.redis.name }}
+    spec:
+      containers:
+        - name: {{ .Values.redis.name }}
+          image: redis:3.2-alpine
+          imagePullPolicy: Always
+          ports:
+            - containerPort: {{ .Values.redis.port }}
+              name: {{ .Values.redis.name }}
+          resources:
+            {{ .Values.redis.resources | toYaml | nindent 12 }}

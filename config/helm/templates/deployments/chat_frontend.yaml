@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.chat_frontend.name }}
+spec:
+  replicas: {{ .Values.chat_frontend.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.chat_frontend.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.chat_frontend.name }}
+    spec:
+      containers:
+        - name: {{ .Values.chat_frontend.name }}
+          image: {{ .Values.image.repository_chat_frontend }}:{{ .Values.image.tag }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.chat_frontend.wsInternalPort }}
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+          imagePullPolicy: IfNotPresent
+          command: ["python3.6"]
+          args: [
+            "-m",
+            "chat_frontend",
+            "--port",
+            "{{ .Values.chat_frontend.wsInternalPort }}",
+            "--host",
+            "0.0.0.0",
+            "--redis_host",
+            "{{ .Values.redis.name }}",
+            "--redis_port",
+            "{{ .Values.redis.port }}",
+            "--mongo_host",
+            "{{ .Values.mongo.name }}:{{ .Values.mongo.port }}",
+            "--mongo_db",
+            "test",
+            "--debug",
+            "1"
+          ]
+          ports:
+            - name: http
+              containerPort: {{ .Values.chat_frontend.wsInternalPort }}
+              protocol: TCP
+          resources:
+            {{ .Values.chat_frontend.resources | toYaml | nindent 12 }}

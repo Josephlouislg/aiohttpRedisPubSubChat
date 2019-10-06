@@ -1,0 +1,68 @@
+version: "3.6"
+
+services:
+  redis:
+    image: redis
+    networks:
+      main:
+        aliases:
+        - redis
+    volumes:
+    - "./.volumes/redis/:/data/"
+
+  mongo:
+    image: mongo:3.4.2
+    networks:
+      main:
+        aliases:
+        - mongo
+    command: mongod --auth
+    restart: always
+    environment:
+    - MONGO_INITDB_ROOT_USERNAME=root
+    - MONGO_INITDB_ROOT_PASSWORD=password
+
+  chat_frontend:
+    image: chat_frontend
+    build:
+      context: .
+      dockerfile: config/docker/Dockerfile.chat_frontend
+    volumes:
+      - ./:/app/
+#    ports:
+#      - "2000:2000"
+    networks:
+      main:
+        aliases:
+          - chat_frontend
+    command: [
+      "python3.6",
+      "-m",
+      "chat_frontend",
+      "--port",
+      "2000",
+      "--host",
+      "0.0.0.0",
+      "--redis_host",
+      "redis",
+      "--redis_port",
+      "6379",
+      "--mongo_host",
+      "mongo:27017",
+      "--mongo_username",
+      "root",
+      "--mongo_password",
+      "password",
+      "--mongo_db",
+      "test",
+      "--debug",
+      "1"
+    ]
+
+
+networks:
+  main:
+    driver: bridge
+    ipam:
+      config:
+      - subnet: 172.19.0.0/16
